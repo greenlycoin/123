@@ -1,0 +1,53 @@
+using System;
+using System.Drawing;
+using System.IO;
+using System.Windows.Forms;
+namespace Test
+{
+    public partial class Producties : UserControl
+    {
+        public Producties()
+        {
+            InitializeComponent();
+        }
+        public void FillData(
+        string title,
+        string desc,
+        string producer,
+        string provider,
+        decimal price,
+        int discount,
+        string unit,
+        int stock,
+        string photo
+        )
+        {
+            // Текст
+            lblTitle.Text = title;
+            lblDesc.Text = desc;
+            lblProducer.Text = "Производитель: " + producer;
+            lblProvider.Text = "Поставщик: " + provider;
+            // Цена
+            lblOldPrice.Text = price.ToString("0.00");
+            decimal newPrice = price - (price * discount / 100m);
+            lblPrice.Text = newPrice.ToString("0.00");
+            lblUnit.Text = "Ед.: " + unit;
+            lblStock.Text = "Остаток: " + stock;
+            lblDiscount.Text = "-" + discount + "%";
+            // Фото: ожидается папка Images рядом с exe
+            // Application.StartupPath = папка, где лежит exe
+            string imgPath = Path.Combine(Application.StartupPath, "Images", photo);
+            if (File.Exists(imgPath))
+                pbPhoto.Image = Image.FromFile(imgPath);
+            else
+                pbPhoto.Image = null;
+            // Цвет карточки (как в гайде логикой)
+            if (stock == 0)
+                BackColor = Color.LightBlue;
+            else if (discount > 15)
+                BackColor = Color.LightGreen;
+            else
+                BackColor = Color.White;
+        }
+    }
+}
