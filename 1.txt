@@ -1,0 +1,86 @@
+using System;
+using System.Data;
+using System.Data.SqlClient;
+using System.Reflection.Emit;
+using System.Windows.Forms;
+namespace Test
+{
+    public partial class Form2 : Form
+    {
+        int roleId;
+        string fio;
+        string connectionString = @"Data Source=(localdb)\MSSQLLocalDB;Initial Catalog=zavtra;Integrated Security=True;TrustServerCertificate=True";
+        public Form2(int roleId, string fio)
+        {
+            InitializeComponent();
+            this.roleId = roleId;
+            this.fio = fio;
+            label1.Text = fio;
+            ApplyPermissions();
+            LoadProducts();
+        }
+        private void ApplyPermissions()
+        {
+            // Допустим: 1 = Админ, 2 = Менеджер, 3 = Покупатель
+            switch (roleId)
+            {
+                case 1: // Админ
+                        // Все кнопки видны
+                    break;
+                case 2: // Менеджер
+                        // Скрыть удаление товаров
+                        // Например: btnDelete.Visible = false;
+                    break;
+                case 3: // Покупатель
+                        // Скрыть всё кроме просмотра
+                        // Например: panelAdminTools.Visible = false;
+                    break;
+                default:
+                    MessageBox.Show("Неизвестная роль. Доступ ограничен.");
+                    break;
+            }
+        }
+        private void LoadProducts()
+        {
+            flowLayoutPanel1.Controls.Clear();
+            try
+            {
+                using (SqlConnection con = new SqlConnection(connectionString))
+                {
+                    con.Open();
+                    // ВАЖНО: УБРАЛИ UnitId, чтобы не было ошибки
+                    string sql =
+                    "SELECT p.Id, p.Name, p.Description, " +
+                   "pr.Name AS Producer, pv.Name AS Provider, " +
+                   "p.Price, p.Discount, p.AmountStock, p.Photo " +
+                   "FROM dbo.Product p " +
+                   "JOIN dbo.Producer pr ON p.ProducedId = pr.Id " +
+                   "JOIN dbo.Provider pv ON p.ProvidedId = pv.Id";
+                    SqlDataAdapter da = new SqlDataAdapter(sql, con);
+                    DataTable dt = new DataTable();
+                    da.Fill(dt);
+                    foreach (DataRow row in dt.Rows)
+                    {
+                        Producties card = new Producties();
+                        card.FillData(
+                        row["Name"].ToString(),
+                       row["Description"].ToString(),
+                       row["Producer"].ToString(),
+                       row["Provider"].ToString(),
+                       Convert.ToDecimal(row["Price"]),
+                        Convert.ToInt32(row["Discount"]),
+                        "шт.", // временно вместо UnitId
+                        Convert.ToInt32(row["AmountStock"]),
+                        row["Photo"].ToString()
+                        );
+                        flowLayoutPanel1.Controls.Add(card);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Ошибка загрузки товаров:\n" + ex.Message);
+            }
+        }
+    }
+}
